@@ -1,0 +1,130 @@
+{% load django_browser_reload %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.9.3/css/bulma.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <title>Content Editor Page</title>
+    <style>
+        .sidebar {
+            height: 100vh;
+            position: fixed;
+            left: 0;
+            top: 0;
+            background-color: #f5f5f5;
+            padding: 1rem;
+            width: 200px;
+        }
+        .content {
+            margin-left: 220px;
+        }
+        /* Ensure the box containing the canvas has a defined height */
+        .chart-container {
+            position: relative;
+            height: 400px; /* Set desired height */
+            width: 100%;
+        }
+        /* Remove explicit canvas height and width to allow Chart.js to handle sizing */
+        #rebateAccountChart {
+            /* width: 100% !important; */
+            /* height: 400px !important; */
+        }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <aside class="menu">
+            <p class="menu-label">Navigation</p>
+            <ul class="menu-list">
+                <li><a href="/">Home</a></li>
+                <li><a href="/login">Login</a></li>
+
+                {% if username %}
+                    <li><a href="/logout">Logout</a></li>
+                {% else %}
+                    <li><a href="/register">Register</a></li>
+                {% endif %}
+
+            </ul>
+        </aside>
+    </div>
+
+    <section class="section content">
+        <div class="container">
+            {% if username %}
+                <div class="notification is-primary">
+                    Hello, {{ username }}!
+                </div>
+            {% endif %}
+            
+            <h1 class="title">Rebate Account Occurrences</h1>
+            <div class="box chart-container">
+                <canvas id="rebateAccountChart"></canvas>
+            </div>
+        </div>
+    </section>
+
+    <!-- Safely embed JSON data -->
+    {{ rebate_account_counts_json|json_script:"rebate-account-data" }}
+
+    <script>
+    // Retrieve data from the JSON script tag
+    const rebateAccountCounts = JSON.parse(document.getElementById('rebate-account-data').textContent);
+
+    // Debugging: Log data to the console
+    console.log("Rebate Account Counts:", rebateAccountCounts);
+
+    // Check if data exists and has keys
+    if (rebateAccountCounts && Object.keys(rebateAccountCounts).length > 0) {
+        const labels = Object.keys(rebateAccountCounts).map(key => key === "0" ? "Unknown" : key);
+        const values = Object.values(rebateAccountCounts);
+
+        const ctx = document.getElementById('rebateAccountChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Rebate Account Occurrences',
+                    data: values,
+                    backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                maintainAspectRatio: false, // Disable aspect ratio maintenance
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            precision: 0 // Ensure integer tick values
+                        }
+                    },
+                    x: {
+                        ticks: {
+                            autoSkip: true, // Show all labels to avoid overcrowding
+                            maxRotation: 45, // Adjust rotation to improve readability
+                            minRotation: 0
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'top',
+                    },
+                    tooltip: {
+                        enabled: true
+                    }
+                }
+            }
+        });
+    } else {
+        console.warn("rebateAccountCounts is empty or undefined.");
+    }
+</script>
+</body>
+</html>
