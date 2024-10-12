@@ -3,5 +3,6 @@ django-ninja
 gunicorn
 djangorestframework
 djangorestframework-simplejwt
+django_browser_reload
 pandas
 openpyxl
