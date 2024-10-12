@@ -18,9 +18,21 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import include, path
 from .api import api
+from .views import HomeView, TestView, RegisterView, LoginView, LogoutView, ProtectedView, ShowView, AccountView
+
 
 urlpatterns = [
     path("admin/", admin.site.urls),
-    path("", api.urls),
+    # 傳統網頁視圖
+    path("", HomeView.as_view(), name="home"),
+    path("test/", TestView.as_view(), name="test"),
+    path("register/", RegisterView.as_view(), name="register"),
+    path("login/", LoginView.as_view(), name="login"),
+    path("logout/", LogoutView.as_view(), name="logout"),
+    path("protected/", ProtectedView.as_view(), name="protected"),
+    path("show/", ShowView.as_view(), name="show"),
+    path("account/", AccountView.as_view(), name="account"),
+    # API 端點
+    path("api/", api.urls),
     path("__reload__/", include("django_browser_reload.urls")),
 ]

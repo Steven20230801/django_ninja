@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.9.3/css/bulma.min.css">
+    <title>Content Editor Page</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .sidebar {
+            height: 100vh;
+            position: fixed;
+            left: 0;
+            top: 0;
+            background-color: #f5f5f5;
+            padding: 1rem;
+            width: 200px;
+        }
+        .content {
+            margin-left: 220px;
+        }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <aside class="menu">
+            <p class="menu-label">Navigation</p>
+            <ul class="menu-list">
+                <li><a href="/">Home</a></li>
+                <li><a href="/login">Login</a></li>
+                {% if username %}
+                    <li><a href="/logout">Logout</a></li>
+                {% else %}
+                    <li><a href="/register">Register</a></li>
+                {% endif %}
+            </ul>
+        </aside>
+    </div>
+
+    <section class="section content">
+        <div class="container">
+            {% if username %}
+                <div class="notification is-primary">
+                    Hello, {{ username }}!
+                </div>
+            {% endif %}
+
+            <!-- 查詢Server, Login -->
+            <form method="post" action="/account/">
+                {% csrf_token %}
+                <div class="field">
+                    <label class="label">Server</label>
+                    <div class="control">
+                        <div class="select">
+                            <select name="server">
+                                {% for server in server_options %}
+                                    <option value="{{ server }}">{{ server }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label class="label">Login</label>
+                    <div class="control">
+                        <input class="input" type="text" name="login" placeholder="Enter login">
+                    </div>
+                </div>
+
+                <div class="field is-grouped">
+                    <div class="control">
+                        <button class="button is-link" type="submit">Query Account</button>
+                    </div>
+                </div>
+            </form>
+
+            <canvas id="chart"></canvas>
+        </div>
+    </section>
+
+
+     
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const data = JSON.parse('{{ data_json|safe }}');
+
+            const labels = data.map(item => item.time);
+            const closePnl = data.map(item => item.close_pnl);
+            const equity = data.map(item => item.equity);
+            const balance = data.map(item => item.balance);
+
+            const ctx = document.getElementById('chart').getContext('2d');
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            type: 'bar',
+                            label: 'Close PnL',
+                            data: closePnl,
+                            backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                            borderColor: 'rgba(75, 192, 192, 1)',
+                            borderWidth: 1
+                        },
+                        {
+                            type: 'line',
+                            label: 'Equity',
+                            data: equity,
+                            borderColor: 'rgba(255, 99, 132, 1)',
+                            fill: false,
+                            tension: 0.1
+                        },
+                        {
+                            type: 'line',
+                            label: 'Balance',
+                            data: balance,
+                            borderColor: 'rgba(54, 162, 235, 1)',
+                            fill: false,
+                            tension: 0.1
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Date'
+                            }
+                        },
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Value'
+                            }
+                        }
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+</html>

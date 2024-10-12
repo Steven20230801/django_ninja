@@ -1,5 +1,7 @@
 db.sqlite3
 venv
 ivr.xlsx
+*.xlsx
 __pycache__/
 *.pyc
+*.Identifier

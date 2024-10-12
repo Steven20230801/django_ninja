@@ -31,6 +31,8 @@ DEBUG = True
 
 ALLOWED_HOSTS = []
 
+APPEND_SLASH = True  # 自动添加 URL 末尾的斜杠
+
 
 # Application definition
 
