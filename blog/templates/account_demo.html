@@ -3,9 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Bulma CSS -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.9.3/css/bulma.min.css">
+    <!-- Flatpickr CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <title>Content Editor Page</title>
+    <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Flatpickr JS -->
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <style>
         .sidebar {
             height: 100vh;
@@ -18,6 +24,29 @@
         }
         .content {
             margin-left: 220px;
+        }
+        .charts-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 2rem;
+        }
+        .chart-box {
+            flex: 1 1 45%;
+            min-width: 300px;
+        }
+
+        /* New Styles for Updated Layout */
+        .charts-main {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 2rem;
+        }
+        .left-column, .right-column {
+            flex: 1;
+            min-width: 300px;
+        }
+        .right-column .chart-box {
+            margin-bottom: 2rem;
         }
     </style>
 </head>
@@ -36,7 +65,6 @@
             </ul>
         </aside>
     </div>
-
     <section class="section content">
         <div class="container">
             {% if username %}
@@ -45,7 +73,7 @@
                 </div>
             {% endif %}
 
-            <!-- 查詢Server, Login -->
+            <!-- Form -->
             <form method="post" action="/account/">
                 {% csrf_token %}
                 <div class="field">
@@ -75,74 +103,313 @@
                 </div>
             </form>
 
-            <canvas id="chart"></canvas>
+            {% if error %}
+                <div class="notification is-danger">
+                    {{ error }}
+                </div>
+            {% endif %}
+
+            <!-- 日期範圍選擇器 -->
+            <div class="field">
+                <label class="label">Select Date Range</label>
+                <div class="control">
+                    <input type="text" id="start-date" class="input" placeholder="Start Date">
+                </div>
+                <div class="control">
+                    <input type="text" id="end-date" class="input" placeholder="End Date">
+                </div>
+                <div class="control">
+                    <button id="clear-dates" class="button is-light">Clear Dates</button>
+                </div>
+            </div>
+
+            <!-- 更新後的圖表區塊 -->
+            <div class="charts-main">
+                <!-- 左側：Account Overview 圖表 -->
+                <div class="left-column">
+                    <div class="chart-box">
+                        <h2 class="title is-4">Account Overview</h2>
+                        <canvas id="account-chart"></canvas>
+                    </div>
+                </div>
+                <!-- 右側：兩個 Pie Charts -->
+                <div class="right-column">
+                    <div class="chart-box">
+                        <h2 class="title is-4">Profit by Symbol (Top 10)</h2>
+                        <canvas id="symbol-pie-chart-top10"></canvas>
+                    </div>
+                    <div class="chart-box">
+                        <h2 class="title is-4">Profit by Symbol (Bottom 10)</h2>
+                        <canvas id="symbol-pie-chart-bottom10"></canvas>
+                    </div>
+                </div>
+            </div>
         </div>
     </section>
 
-
-     
-
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            const data = JSON.parse('{{ data_json|safe }}');
+            let data;
+            let tradesData;
+            try {
+                data = JSON.parse('{{ data_json|escapejs }}');
+                tradesData = JSON.parse('{{ trades_json|escapejs }}');
+            } catch (e) {
+                console.error("Invalid JSON data:", e);
+                data = [];
+                tradesData = [];
+            }
 
-            const labels = data.map(item => item.time);
-            const closePnl = data.map(item => item.close_pnl);
-            const equity = data.map(item => item.equity);
-            const balance = data.map(item => item.balance);
+            // 初始化 Flatpickr
+            flatpickr("#start-date", {
+                dateFormat: "Y-m-d",
+                onChange: updateCharts
+            });
 
-            const ctx = document.getElementById('chart').getContext('2d');
-            new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: labels,
-                    datasets: [
-                        {
-                            type: 'bar',
-                            label: 'Close PnL',
-                            data: closePnl,
-                            backgroundColor: 'rgba(75, 192, 192, 0.2)',
-                            borderColor: 'rgba(75, 192, 192, 1)',
-                            borderWidth: 1
-                        },
-                        {
-                            type: 'line',
-                            label: 'Equity',
-                            data: equity,
-                            borderColor: 'rgba(255, 99, 132, 1)',
-                            fill: false,
-                            tension: 0.1
-                        },
-                        {
-                            type: 'line',
-                            label: 'Balance',
-                            data: balance,
-                            borderColor: 'rgba(54, 162, 235, 1)',
-                            fill: false,
-                            tension: 0.1
-                        }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    scales: {
-                        x: {
-                            beginAtZero: true,
-                            title: {
-                                display: true,
-                                text: 'Date'
+            flatpickr("#end-date", {
+                dateFormat: "Y-m-d",
+                onChange: updateCharts
+            });
+
+            // 初始化圖表實例變量
+            let accountChartInstance;
+            let symbolPieChartTop10Instance;
+            let symbolPieChartBottom10Instance;
+
+            if (data.length > 0) {
+                accountChartInstance = initializeAccountChart(data);
+            }
+
+            if (tradesData.length > 0) {
+                const top10Data = getTop10Profits(tradesData);
+                const bottom10Data = getBottom10Profits(tradesData);
+                symbolPieChartTop10Instance = initializeSymbolPieChart(top10Data, 'symbol-pie-chart-top10', 'Top 10 Profitable Symbols');
+                symbolPieChartBottom10Instance = initializeSymbolPieChart(bottom10Data, 'symbol-pie-chart-bottom10', 'Top 10 Least Profitable Symbols');
+            }
+
+            // 清除日期範圍按鈕
+            document.getElementById('clear-dates').addEventListener('click', function(e) {
+                e.preventDefault();
+                document.getElementById('start-date')._flatpickr.clear();
+                document.getElementById('end-date')._flatpickr.clear();
+                // 恢復圖表顯示全部數據
+                if (accountChartInstance) {
+                    accountChartInstance.data.labels = data.map(item => item.TIME);
+                    accountChartInstance.data.datasets[0].data = data.map(item => item.CLOSE_PNL);
+                    accountChartInstance.data.datasets[1].data = data.map(item => item.EQUITY);
+                    accountChartInstance.data.datasets[2].data = data.map(item => item.BALANCE);
+                    accountChartInstance.update();
+                }
+                if (symbolPieChartTop10Instance && symbolPieChartBottom10Instance) {
+                    const top10Data = getTop10Profits(tradesData);
+                    const bottom10Data = getBottom10Profits(tradesData);
+
+                    updatePieChart(symbolPieChartTop10Instance, top10Data);
+                    updatePieChart(symbolPieChartBottom10Instance, bottom10Data);
+                }
+            });
+
+            // 函數：初始化 Account Overview 圖表
+            function initializeAccountChart(chartData) {
+                const labels = chartData.map(item => item.TIME);
+                const closePnl = chartData.map(item => item.CLOSE_PNL);
+                const EQUITY = chartData.map(item => item.EQUITY);
+                const BALANCE = chartData.map(item => item.BALANCE);
+
+                const ctx = document.getElementById('account-chart').getContext('2d');
+                return new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [
+                            {
+                                type: 'bar',
+                                label: 'Close PnL',
+                                data: closePnl,
+                                backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                                borderColor: 'rgba(75, 192, 192, 1)',
+                                borderWidth: 1
+                            },
+                            {
+                                type: 'line',
+                                label: 'EQUITY',
+                                data: EQUITY,
+                                borderColor: 'rgba(255, 99, 132, 1)',
+                                fill: false,
+                                tension: 0.1
+                            },
+                            {
+                                type: 'line',
+                                label: 'BALANCE',
+                                data: BALANCE,
+                                borderColor: 'rgba(54, 162, 235, 1)',
+                                fill: false,
+                                tension: 0.1
                             }
-                        },
-                        y: {
-                            beginAtZero: true,
-                            title: {
-                                display: true,
-                                text: 'Value'
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        scales: {
+                            x: {
+                                beginAtZero: true,
+                                title: {
+                                    display: true,
+                                    text: 'Date'
+                                }
+                            },
+                            y: {
+                                beginAtZero: true,
+                                title: {
+                                    display: true,
+                                    text: 'Value'
+                                }
                             }
                         }
                     }
+                });
+            }
+
+            // 函數：初始化 Symbol Pie Chart（通用函數）
+            function initializeSymbolPieChart(chartData, canvasId, titleText) {
+                const labels = chartData.map(item => item.symbol);
+                const profits = chartData.map(item => item.profit); // 保留原始 PROFIT 符號
+
+                const ctx = document.getElementById(canvasId).getContext('2d');
+                return new Chart(ctx, {
+                    type: 'pie',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            data: profits,
+                            backgroundColor: generateColors(labels.length),
+                            borderColor: '#fff',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: {
+                                position: 'right',
+                            },
+                            title: {
+                                display: true,
+                                text: titleText
+                            }
+                        }
+                    }
+                });
+            }
+
+            // 函數：根據日期範圍更新三個圖表
+            function updateCharts() {
+                const startDate = document.getElementById('start-date').value;
+                const endDate = document.getElementById('end-date').value;
+
+                if (!startDate || !endDate) {
+                    return;
                 }
-            });
+
+                // 轉換為日期對象
+                const start = new Date(startDate);
+                const end = new Date(endDate);
+
+                // 篩選 Account Overview 圖表數據
+                const filteredAccountData = data.filter(item => {
+                    const itemDate = new Date(item.TIME);
+                    return itemDate >= start && itemDate <= end;
+                });
+
+                if (accountChartInstance) {
+                    accountChartInstance.data.labels = filteredAccountData.map(item => item.TIME);
+                    accountChartInstance.data.datasets[0].data = filteredAccountData.map(item => item.CLOSE_PNL);
+                    accountChartInstance.data.datasets[1].data = filteredAccountData.map(item => item.EQUITY);
+                    accountChartInstance.data.datasets[2].data = filteredAccountData.map(item => item.BALANCE);
+                    accountChartInstance.update();
+                }
+
+                // 篩選 Symbol Pie Charts 數據
+                const filteredTradesData = tradesData.filter(item => {
+                    const itemDate = new Date(item.TIME);
+                    return itemDate >= start && itemDate <= end;
+                });
+
+                if (symbolPieChartTop10Instance && symbolPieChartBottom10Instance) {
+                    const top10Data = getTop10Profits(filteredTradesData);
+                    const bottom10Data = getBottom10Profits(filteredTradesData);
+
+                    updatePieChart(symbolPieChartTop10Instance, top10Data);
+                    updatePieChart(symbolPieChartBottom10Instance, bottom10Data);
+                }
+            }
+
+            // 函數：獲取前10名最大Profit的Symbols
+            function getTop10Profits(trades) {
+                const profitBySymbol = {};
+                trades.forEach(item => {
+                    if (profitBySymbol[item.SYMBOL]) {
+                        profitBySymbol[item.SYMBOL] += item.PROFIT;
+                    } else {
+                        profitBySymbol[item.SYMBOL] = item.PROFIT;
+                    }
+                });
+
+                // 將聚合結果轉換為數組並計算絕對值 PROFIT
+                const profitArray = Object.entries(profitBySymbol).map(([symbol, profit]) => ({
+                    symbol,
+                    profit
+                }));
+
+                // 按照 PROFIT 進行降序排序並選取前十名
+                profitArray.sort((a, b) => b.profit - a.profit);
+                return profitArray.slice(0, 10);
+            }
+
+            // 函數：獲取前10名最小Profit的Symbols
+            function getBottom10Profits(trades) {
+                const profitBySymbol = {};
+                trades.forEach(item => {
+                    if (profitBySymbol[item.SYMBOL]) {
+                        profitBySymbol[item.SYMBOL] += item.PROFIT;
+                    } else {
+                        profitBySymbol[item.SYMBOL] = item.PROFIT;
+                    }
+                });
+
+                // 將聚合結果轉換為數組
+                const profitArray = Object.entries(profitBySymbol).map(([symbol, profit]) => ({
+                    symbol,
+                    profit
+                }));
+
+                // 按照 PROFIT 進行升序排序並選取前十名
+                profitArray.sort((a, b) => a.profit - b.profit);
+                return profitArray.slice(0, 10);
+            }
+
+            // 函數：更新 Pie Chart
+            function updatePieChart(chartInstance, chartData) {
+                const labels = chartData.map(item => item.symbol);
+                const profits = chartData.map(item => item.profit);
+
+                chartInstance.data.labels = labels;
+                chartInstance.data.datasets[0].data = profits;
+                chartInstance.data.datasets[0].backgroundColor = generateColors(labels.length);
+                chartInstance.update();
+            }
+
+            // 函數：生成隨機顏色數組
+            function generateColors(num) {
+                const colors = [];
+                for (let i = 0; i < num; i++) {
+                    const r = Math.floor(Math.random() * 255);
+                    const g = Math.floor(Math.random() * 255);
+                    const b = Math.floor(Math.random() * 255);
+                    colors.push(`rgba(${r}, ${g}, ${b}, 0.6)`);
+                }
+                return colors;
+            }
         });
     </script>
 </body>
