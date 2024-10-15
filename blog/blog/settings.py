@@ -29,7 +29,8 @@ SECRET_KEY = "django-insecure-7uvwblwdl8s08=gpf@9pl74yrn!%#)c-0)e0t)e*9i&@h7l)v-
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = os.getenv('DJANGO_ALLOWED_HOSTS', 'localhost').split(',')
+
 
 APPEND_SLASH = True  # 自动添加 URL 末尾的斜杠
 
