@@ -6,3 +6,6 @@ djangorestframework-simplejwt
 django_browser_reload
 pandas
 openpyxl
+python-dotenv
+python-jose 
+passlib[bcrypt]

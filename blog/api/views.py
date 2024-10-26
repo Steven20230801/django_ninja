@@ -3,11 +3,11 @@ from ninja import Router
 from django.contrib.auth import authenticate
 from django.contrib.auth.models import User
 from .schemas import UserRegisterSchema, TokenSchema
-from .security import create_access_token
+from .security import ACCESS_TOKEN_EXPIRE_MINUTES, create_access_token
 from datetime import timedelta
 from ninja.security import HttpBearer, APIKeyHeader
 from typing import Optional
-from ninja import Request
+# from ninja import Request
 
 router = Router()
 
