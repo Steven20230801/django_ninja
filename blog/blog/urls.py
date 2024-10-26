@@ -17,9 +17,18 @@ Including another URLconf
 
 from django.contrib import admin
 from django.urls import include, path
-from .api import api
+
+# from .api import api
 from .views import HomeView, TestView, RegisterView, LoginView, LogoutView, ProtectedView, ShowView, AccountView
 
+
+from ninja import NinjaAPI
+from api.views import router as api_router
+
+
+api = NinjaAPI()
+
+api.add_router("/api/", api_router)
 
 urlpatterns = [
     path("admin/", admin.site.urls),
@@ -33,6 +42,6 @@ urlpatterns = [
     path("show/", ShowView.as_view(), name="show"),
     path("account/", AccountView.as_view(), name="account"),
     # API 端點
-    path("api/", api.urls),
+    path("", api.urls),
     path("__reload__/", include("django_browser_reload.urls")),
 ]

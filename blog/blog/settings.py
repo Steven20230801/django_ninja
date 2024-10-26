@@ -13,6 +13,8 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 import os
 from pathlib import Path
 
+from dotenv import load_dotenv
+
 LOGIN_URL = "login"  # 未登录用户访问受保护页面时，重定向到登录页面
 LOGIN_REDIRECT_URL = "home"  # 登录成功后重定向的页面
 
@@ -24,12 +26,16 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = "django-insecure-7uvwblwdl8s08=gpf@9pl74yrn!%#)c-0)e0t)e*9i&@h7l)v-"
+# 載入 .env 文件
+load_dotenv(os.path.join(BASE_DIR, ".env"))
+
+# 讀取環境變數
+SECRET_KEY = os.getenv("SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = os.getenv('DJANGO_ALLOWED_HOSTS', 'localhost').split(',')
+ALLOWED_HOSTS = os.getenv("DJANGO_ALLOWED_HOSTS", "localhost").split(",")
 
 
 APPEND_SLASH = True  # 自动添加 URL 末尾的斜杠
@@ -48,6 +54,7 @@ INSTALLED_APPS = [
     "rest_framework.authtoken",
     "django_browser_reload",
     "blog",
+    "api",
 ]
 
 MIDDLEWARE = [
