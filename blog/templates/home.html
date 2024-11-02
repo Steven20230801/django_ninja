@@ -1,56 +1,83 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.9.3/css/bulma.min.css">
-    <title>Content Editor Page</title>
-    <style>
-        .sidebar {
-            height: 100vh;
-            position: fixed;
-            left: 0;
-            top: 0;
-            background-color: #f5f5f5;
-            padding: 1rem;
-            width: 200px;
-        }
-        .content {
-            margin-left: 220px;
-        }
-    </style>
+<!-- templates/home.html -->
+{% extends 'base.html' %}
 
-</head>
-<body>
-    <div class="sidebar">
-        <aside class="menu">
-            <p class="menu-label">Navigation</p>
-            <ul class="menu-list">
-                <li><a href="/">Home</a></li>
-                <li><a href="/login">Login</a></li>
+{% block title %}Home - Content Editor{% endblock %}
 
-                {% if username %}
-                    <li><a href="/logout">Logout</a></li>
-                {% else %}
-                    <li><a href="/register">Register</a></li>
-                {% endif %}
-
-            </ul>
-        </aside>
-    </div>
-
-    <section class="section content">
-        <div class="container">
-
-
-            {% if username %}
-                <div class="notification is-primary">
-                    Hello, {{ username }}!
-                </div>
+{% block content %}
+    <!-- Hero 區域 -->
+    <section class="hero">
+        <div class="hero-body">
+            <h1 class="hero-title">Welcome to ContentEditor</h1>
+            <p class="hero-subtitle">Create, Edit, and Manage Your Content with Ease</p>
+            {% if not username %}
+                <a href="/register" class="button is-primary is-large"><i class="fas fa-user-plus"></i> Get Started</a>
             {% endif %}
-
-
         </div>
     </section>
-</body>
-</html>
+
+    <!-- 內容區域 -->
+    <section class="section content">
+        <div class="container">
+            {% if username %}
+                <div class="notification is-primary">
+                    <strong>Hello, {{ username }}!</strong> Welcome back to your dashboard.
+                </div>
+            {% endif %}
+            <!-- 卡片範例 -->
+            <div class="columns is-multiline">
+                <div class="column is-one-third">
+                    <div class="card">
+                        <header class="card-header">
+                            <p class="card-header-title">
+                                <i class="fas fa-file-alt"></i> Your Articles
+                            </p>
+                        </header>
+                        <div class="card-content">
+                            <div class="content">
+                                Manage and edit your articles seamlessly.
+                            </div>
+                        </div>
+                        <footer class="card-footer">
+                            <a href="/articles" class="card-footer-item">View Articles</a>
+                        </footer>
+                    </div>
+                </div>
+                <div class="column is-one-third">
+                    <div class="card">
+                        <header class="card-header">
+                            <p class="card-header-title">
+                                <i class="fas fa-chart-line"></i> Analytics
+                            </p>
+                        </header>
+                        <div class="card-content">
+                            <div class="content">
+                                Track your content performance with detailed analytics.
+                            </div>
+                        </div>
+                        <footer class="card-footer">
+                            <a href="/analytics" class="card-footer-item">View Analytics</a>
+                        </footer>
+                    </div>
+                </div>
+                <div class="column is-one-third">
+                    <div class="card">
+                        <header class="card-header">
+                            <p class="card-header-title">
+                                <i class="fas fa-cogs"></i> Settings
+                            </p>
+                        </header>
+                        <div class="card-content">
+                            <div class="content">
+                                Customize your preferences and account settings.
+                            </div>
+                        </div>
+                        <footer class="card-footer">
+                            <a href="/settings" class="card-footer-item">View Settings</a>
+                        </footer>
+                    </div>
+                </div>
+            </div>
+            <!-- 更多內容可以在這裡添加 -->
+        </div>
+    </section>
+{% endblock %}

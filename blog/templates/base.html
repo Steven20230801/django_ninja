@@ -1,0 +1,157 @@
+<!-- templates/base.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- 引入 Bulma CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.9.3/css/bulma.min.css">
+    <!-- 引入 Font Awesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <title>{% block title %}Content Editor{% endblock %}</title>
+    <style>
+        /* 全局樣式 */
+        body {
+            background-color: #121212;
+            color: #ffffff;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        /* 調整導航欄樣式 */
+        .navbar {
+            background-color: #1f1f1f;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .navbar-item, .navbar-link {
+            color: #ffffff;
+            transition: color 0.3s;
+        }
+        .navbar-item:hover, .navbar-link:hover {
+            color: #f39c12;
+        }
+        /* 漢堡選單顏色 */
+        .navbar-burger span {
+            background-color: #ffffff;
+        }
+        /* Hero 區域 */
+        .hero {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #ffffff;
+            padding: 4rem 1.5rem;
+            text-align: center;
+        }
+        .hero-title {
+            font-size: 3rem;
+            font-weight: bold;
+            margin-bottom: 1rem;
+        }
+        .hero-subtitle {
+            font-size: 1.25rem;
+            margin-bottom: 2rem;
+        }
+        /* 內容區域 */
+        .content {
+            padding-top: 2rem;
+        }
+        .notification.is-primary {
+            background-color: #2d9cdb;
+            color: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            padding: 1.5rem;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        .notification.is-primary:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+        /* 卡片樣式 */
+        .card {
+            background-color: #1e1e1e;
+            border: none;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+        .card-header, .card-footer {
+            background-color: #2d2d2d;
+            border-bottom: 1px solid #333;
+            border-top: 1px solid #333;
+        }
+        /* 按鈕樣式 */
+        .button.is-primary {
+            background-color: #f39c12;
+            border: none;
+            color: #ffffff;
+            transition: background-color 0.3s;
+        }
+        .button.is-primary:hover {
+            background-color: #d35400;
+        }
+    </style>
+    {% block extra_head %}{% endblock %}
+</head>
+<body>
+    <!-- 頂部導航欄 -->
+    <nav class="navbar is-fixed-top" role="navigation" aria-label="main navigation">
+        <div class="navbar-brand">
+            <a class="navbar-item" href="/">
+                <strong><i class="fas fa-edit"></i> ContentEditor</strong>
+            </a>
+            <!-- 手機版的漢堡選單按鈕 -->
+            <a role="button" class="navbar-burger" aria-label="menu" aria-expanded="false" data-target="navbarMenu">
+                <span aria-hidden="true"></span>
+                <span aria-hidden="true"></span>
+                <span aria-hidden="true"></span>
+            </a>
+        </div>
+
+        <div id="navbarMenu" class="navbar-menu">
+            <div class="navbar-start">
+                <a class="navbar-item" href="/login">
+                    <i class="fas fa-sign-in-alt"></i> Login
+                </a>
+                {% if username %}
+                    <a class="navbar-item" href="/logout">
+                        <i class="fas fa-sign-out-alt"></i> Logout
+                    </a>
+                {% else %}
+                    <a class="navbar-item" href="/register">
+                        <i class="fas fa-user-plus"></i> Register
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+    </nav>
+
+    <!-- 主要內容區域 -->
+    <main style="margin-top: 3rem;">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Bulma 的 JavaScript 用於導航欄的互動 -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // 獲取所有的漢堡選單
+            const $navbarBurgers = Array.prototype.slice.call(document.querySelectorAll('.navbar-burger'), 0);
+            
+            // 檢查是否有漢堡選單存在
+            if ($navbarBurgers.length > 0) {
+                $navbarBurgers.forEach( el => {
+                    el.addEventListener('click', () => {
+                        const target = el.dataset.target;
+                        const $target = document.getElementById(target);
+                        
+                        // 切換 'is-active' 類
+                        el.classList.toggle('is-active');
+                        $target.classList.toggle('is-active');
+                    });
+                });
+            }
+        });
+    </script>
+    {% block extra_scripts %}{% endblock %}
+</body>
+</html>

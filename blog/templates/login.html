@@ -1,52 +1,18 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.9.3/css/bulma.min.css">
-    <title>Content Editor Page</title>
-    <style>
-        .sidebar {
-            height: 100vh;
-            position: fixed;
-            left: 0;
-            top: 0;
-            background-color: #f5f5f5;
-            padding: 1rem;
-            width: 200px;
-        }
-        .content {
-            margin-left: 220px;
-        }
-    </style>
+<!-- templates/login.html -->
+{% extends 'base.html' %}
 
-</head>
-<body>
-    <div class="sidebar">
-        <aside class="menu">
-            <p class="menu-label">Navigation</p>
-            <ul class="menu-list">
-                <li><a href="/">Home</a></li>
-                <li><a href="/login">Login</a></li>
-                {% if username %}
-                    <li><a href="/logout">Logout</a></li>
-                {% else %}
-                    <li><a href="/register">Register</a></li>
-                {% endif %}
-            </ul>
-        </aside>
-    </div>
+{% block title %}登录 - Content Editor{% endblock %}
 
-    <section class="section content">
+{% block content %}
+    <section class="section">
         <div class="container">
-            
-            {% if user_name %}
+            {% if username %}
                 <div class="notification is-primary">
-                    Hello, {{ user_name }}!
+                    <strong>你好，{{ username }}！</strong>
                 </div>
             {% endif %}
 
-            <h2 class="title">Login</h2>
+            <h2 class="title">登录</h2>
             {% if error %}
                 <div class="notification is-danger">
                     {{ error }}
@@ -56,26 +22,23 @@
             <form method="post" action="/login/">
                 {% csrf_token %}
                 <div class="field">
-                    <label class="label">Username</label>
+                    <label class="label">用户名</label>
                     <div class="control">
-                        <input class="input" type="text" name="username" placeholder="Enter your username">
-
+                        <input class="input" type="text" name="username" placeholder="输入您的用户名" required>
                     </div>
                 </div>
                 <div class="field">
-                    <label class="label">Password</label>
+                    <label class="label">密码</label>
                     <div class="control">
-                        <input class="input" type="password" name="password" placeholder="Enter your password">
-
+                        <input class="input" type="password" name="password" placeholder="输入您的密码" required>
                     </div>
                 </div>
-                <div class="field is-grouped">
+                <div class="field">
                     <div class="control">
-                        <button class="button is-link" type="submit">Login</button>
+                        <button class="button is-primary" type="submit">登录</button>
                     </div>
                 </div>
             </form>
         </div>
     </section>
-</body>
-</html>
+{% endblock %}
