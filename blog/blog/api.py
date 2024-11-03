@@ -9,13 +9,16 @@ from django.contrib.auth.models import User  # User 模型用於用戶註冊表�
 from .forms import UserRegisterForm
 from ninja.security import SessionAuth
 
-api = NinjaAPI()
+from ninja import NinjaAPI
+
+from api.views import router as api_router  # 導入app api.api的二級路由
+from user.api import router as user_router  # 導入app user.api的二級路由
 
 
-# 簡單的 Hello World 端點
-@api.get("/hello")
-def hello(request):
-    return {"message": "Hello World!"}
+api = NinjaAPI()  # 建立一級路由 整合所有 app 的 API
+
+api.add_router(prefix="/api/", router=api_router)  # 將app層級的二級路由加入一級路由
+api.add_router(prefix="/user/", router=user_router)  # 將app層級的二級路由加入一級路由
 
 
 # # 首頁端點

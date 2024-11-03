@@ -20,15 +20,8 @@ from django.urls import include, path
 
 # from .api import api
 from .views import HomeView, TestView, RegisterView, LoginView, LogoutView, ProtectedView, ShowView, AccountView
+from .api import api  # 在 Django Ninja 中，專案層級的urls.py化身為連接 Django 和 Django Ninja API 的橋梁。
 
-
-from ninja import NinjaAPI
-from api.views import router as api_router
-
-
-api = NinjaAPI()
-
-api.add_router("/api/", api_router)
 
 urlpatterns = [
     path("admin/", admin.site.urls),
