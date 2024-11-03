@@ -1,0 +1,62 @@
+<!-- templates/pe_ivr_table.html -->
+{% extends "base.html" %}
+
+{% block content %}
+  <div class="container">
+    <h1 class="title has-text-white">PE IVR Data Table</h1>
+    <div class="table-container">
+      <table class="table is-striped is-hoverable is-fullwidth">
+        <thead>
+          <tr>
+            <th>CRM Server</th>
+            <th>Date</th>
+            <th>Server</th>
+            <th>Login</th>
+            <th>Symbol</th>
+            <th>Ticket</th>
+            <th>Order</th>
+            <th>Rebate Account</th>
+            <th>Group</th>
+            <th>Group Name</th>
+            <th>Settle Mode</th>
+            <th>IVR</th>
+            <th>Rebate</th>
+            <th>Commission (USD)</th>
+            <th>PE Spread (USD)</th>
+            <th>Coefficient</th>
+            <th>Mean Coefficient</th>
+            <th>Coefficient Ratio</th>
+            <th>Volume</th>
+            <th>RPV</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in data %}
+          <tr>
+            <td>{{ row.crm_server }}</td>
+            <td>{{ row.date }}</td>
+            <td>{{ row.server }}</td>
+            <td>{{ row.login }}</td>
+            <td>{{ row.symbol }}</td>
+            <td>{{ row.ticket }}</td>
+            <td>{{ row.order }}</td>
+            <td>{{ row.rebate_account }}</td>
+            <td>{{ row.group }}</td>
+            <td>{{ row.group_name }}</td>
+            <td>{{ row.settle_mode }}</td>
+            <td>{{ row.ivr }}</td>
+            <td>{{ row.rebate }}</td>
+            <td>{{ row.commission_usd }}</td>
+            <td>{{ row.pe_spread_usd }}</td>
+            <td>{{ row.coefficient }}</td>
+            <td>{{ row.mean_coefficient }}</td>
+            <td>{{ row.coefficient_ratio }}</td>
+            <td>{{ row.volume }}</td>
+            <td>{{ row.rpv }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+{% endblock %}

@@ -186,3 +186,26 @@ class AccountView(View):
                     "username": request.user.username if request.user.is_authenticated else None,
                 },
             )
+
+from django.views.generic import TemplateView
+
+
+class PEIVRTableView(TemplateView):
+    template_name = 'pe_ivr_table.html'
+
+    def get_context_data(self, **kwargs):
+        # 調用父類別的方法來取得原有的上下文
+        context = super().get_context_data(**kwargs)
+
+        # 讀取 Excel 檔案
+        file_path = 'pe_ivr.xlsx'  # 使用你的實際檔案路徑
+        import os 
+        print(os.getcwd())
+        df = pd.read_excel(file_path)
+
+        # 將 DataFrame 轉換為列表形式，這樣更方便傳遞給模板
+        data = df.to_dict(orient='records')
+
+        # 將資料加入上下文
+        context['data'] = data
+        return context

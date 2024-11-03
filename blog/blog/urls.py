@@ -19,7 +19,7 @@ from django.contrib import admin
 from django.urls import include, path
 
 # from .api import api
-from .views import HomeView, TestView, RegisterView, LoginView, LogoutView, ProtectedView, ShowView, AccountView
+from .views import HomeView, TestView, RegisterView, LoginView, LogoutView, ProtectedView, ShowView, AccountView, PEIVRTableView
 from .api import api  # 在 Django Ninja 中，專案層級的urls.py化身為連接 Django 和 Django Ninja API 的橋梁。
 
 
@@ -34,6 +34,7 @@ urlpatterns = [
     path("protected/", ProtectedView.as_view(), name="protected"),
     path("show/", ShowView.as_view(), name="show"),
     path("account/", AccountView.as_view(), name="account"),
+    path("peivr/", PEIVRTableView.as_view(), name="peivr"),
     # API 端點
     path("", api.urls),
     path("__reload__/", include("django_browser_reload.urls")),
