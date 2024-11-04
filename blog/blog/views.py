@@ -189,6 +189,9 @@ class AccountView(View):
 
 from django.views.generic import TemplateView
 
+from django.views.generic import TemplateView
+from django.core.paginator import Paginator
+from django.utils.dateparse import parse_date
 
 class PEIVRTableView(TemplateView):
     template_name = 'pe_ivr_table.html'
@@ -197,15 +200,70 @@ class PEIVRTableView(TemplateView):
         # 調用父類別的方法來取得原有的上下文
         context = super().get_context_data(**kwargs)
 
-        # 讀取 Excel 檔案
-        file_path = 'pe_ivr.xlsx'  # 使用你的實際檔案路徑
-        import os 
-        print(os.getcwd())
-        df = pd.read_excel(file_path)
+        # 獲取 GET 請求中的日期範圍參數
+        request = self.request
+        start_date_str = request.GET.get('start_date')
+        end_date_str = request.GET.get('end_date')
+        page_number = request.GET.get('page')
 
-        # 將 DataFrame 轉換為列表形式，這樣更方便傳遞給模板
+        # 讀取 Excel 檔案
+        file_path = 'pe_ivr.xlsx'  # 請使用您的實際檔案路徑
+        # 確認檔案存在
+        if not os.path.exists(file_path):
+            context['error'] = '數據檔案不存在。'
+            context['data'] = []
+            context['paginator'] = None
+            context['page_obj'] = None
+            context['start_date'] = start_date_str
+            context['end_date'] = end_date_str
+            return context
+
+        try:
+            df = pd.read_excel(file_path)
+        except Exception as e:
+            context['error'] = f'讀取數據檔案時發生錯誤：{e}'
+            context['data'] = []
+            context['paginator'] = None
+            context['page_obj'] = None
+            context['start_date'] = start_date_str
+            context['end_date'] = end_date_str
+            return context
+
+        # 確保 'date' 欄位存在並轉換為日期對象
+        if 'date' not in df.columns:
+            context['error'] = "'date' 欄位在數據中不存在。"
+            context['data'] = []
+            context['paginator'] = None
+            context['page_obj'] = None
+            context['start_date'] = start_date_str
+            context['end_date'] = end_date_str
+            return context
+
+        # 轉換 'date' 欄位為日期對象
+        df['date'] = pd.to_datetime(df['date']).dt.date
+
+        # 解析日期字符串為日期對象
+        start_date = parse_date(start_date_str) if start_date_str else None
+        end_date = parse_date(end_date_str) if end_date_str else None
+
+        # 根據日期範圍過濾數據
+        if start_date:
+            df = df[df['date'] >= start_date]
+        if end_date:
+            df = df[df['date'] <= end_date]
+
+        # 將 DataFrame 轉換為列表形式
         data = df.to_dict(orient='records')
 
+        # 實現分頁
+        paginator = Paginator(data, 20)  # 每頁顯示 20 條數據
+        page_obj = paginator.get_page(page_number)
+
         # 將資料加入上下文
-        context['data'] = data
+        context['data'] = page_obj.object_list
+        context['paginator'] = paginator
+        context['page_obj'] = page_obj
+        context['start_date'] = start_date_str
+        context['end_date'] = end_date_str
+
         return context

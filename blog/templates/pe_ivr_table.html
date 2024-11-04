@@ -1,11 +1,99 @@
-<!-- templates/pe_ivr_table.html -->
+<!-- templates/peivr.html -->
 {% extends "base.html" %}
+
+{% block title %}PE IVR Data Table{% endblock %}
+
+{% block extra_head %}
+    {{ block.super }}
+    <!-- Flatpickr CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <style>
+        /* 日期範圍選擇器樣式 */
+        .date-range-selector {
+            margin-bottom: 2rem;
+            padding: 1.5rem;
+            background-color: #2d2d2d;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        }
+        .date-range-selector .label {
+            color: #f39c12;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+        .date-range-selector .control {
+            margin-bottom: 1rem;
+        }
+        .date-range-selector .button {
+            margin-top: 0.5rem;
+        }
+        /* 調整表格樣式以適應深色背景 */
+        .table-container {
+            overflow-x: auto;
+        }
+        .table thead th {
+            background-color: #1e1e1e;
+            color: #f39c12;
+        }
+        .table tbody tr {
+            background-color: #2d2d2d;
+            color: #ffffff;
+        }
+        .table tbody tr:nth-child(even) {
+            background-color: #3a3a3a;
+        }
+        /* 分頁樣式調整 */
+        .pagination.is-centered a.pagination-link.is-current {
+            background-color: #f39c12;
+            border-color: #f39c12;
+            color: #ffffff;
+        }
+        .pagination.is-centered a.pagination-link {
+            background-color: #2d2d2d;
+            border-color: #444;
+            color: #ffffff;
+        }
+        .pagination.is-centered a.pagination-previous,
+        .pagination.is-centered a.pagination-next {
+            background-color: #2d2d2d;
+            border-color: #444;
+            color: #ffffff;
+        }
+    </style>
+{% endblock %}
 
 {% block content %}
   <div class="container">
-    <h1 class="title has-text-white">PE IVR Data Table</h1>
+    <h1 class="title">PE IVR Data Table</h1>
+    
+    <!-- 日期範圍選擇器 -->
+    <div class="date-range-selector">
+        <form method="get" action="{% url 'peivr' %}">
+            <div class="field">
+                <label class="label">選擇日期範圍</label>
+                <div class="control">
+                    <input type="text" name="start_date" id="start-date" class="input datepicker" placeholder="開始日期" value="{{ start_date }}">
+                </div>
+                <div class="control">
+                    <input type="text" name="end_date" id="end-date" class="input datepicker" placeholder="結束日期" value="{{ end_date }}">
+                </div>
+                <div class="control">
+                    <button type="submit" class="button is-primary"><i class="fas fa-filter"></i> 過濾</button>
+                    <button type="button" id="clear-dates" class="button is-light"><i class="fas fa-times"></i> 清除日期</button>
+                </div>
+            </div>
+        </form>
+    </div>
+    
+    <!-- 顯示錯誤訊息（如果有） -->
+    {% if error %}
+        <div class="notification is-danger">
+            {{ error }}
+        </div>
+    {% endif %}
+    
     <div class="table-container">
-      <table class="table is-striped is-hoverable is-fullwidth">
+      <table class="table is-hoverable is-fullwidth">
         <thead>
           <tr>
             <th>CRM Server</th>
@@ -54,9 +142,81 @@
             <td>{{ row.volume }}</td>
             <td>{{ row.rpv }}</td>
           </tr>
+          {% empty %}
+          <tr>
+            <td colspan="20" class="has-text-centered">沒有數據可顯示。</td>
+          </tr>
           {% endfor %}
         </tbody>
       </table>
     </div>
+    
+    <!-- 分頁控制 -->
+    {% if paginator.num_pages > 1 %}
+    <nav class="pagination is-centered" role="navigation" aria-label="pagination">
+      {% if page_obj.has_previous %}
+        <a class="pagination-previous" href="?page={{ page_obj.previous_page_number }}&start_date={{ start_date }}&end_date={{ end_date }}">上一頁</a>
+      {% else %}
+        <a class="pagination-previous" disabled>上一頁</a>
+      {% endif %}
+
+      {% if page_obj.has_next %}
+        <a class="pagination-next" href="?page={{ page_obj.next_page_number }}&start_date={{ start_date }}&end_date={{ end_date }}">下一頁</a>
+      {% else %}
+        <a class="pagination-next" disabled>下一頁</a>
+      {% endif %}
+
+      <ul class="pagination-list">
+        {% for num in paginator.page_range %}
+          {% if page_obj.number == num %}
+            <li><a class="pagination-link is-current">{{ num }}</a></li>
+          {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+            <li><a class="pagination-link" href="?page={{ num }}&start_date={{ start_date }}&end_date={{ end_date }}">{{ num }}</a></li>
+          {% endif %}
+        {% endfor %}
+      </ul>
+    </nav>
+    {% endif %}
+    
   </div>
+{% endblock %}
+
+{% block extra_scripts %}
+    {{ block.super }}
+    <!-- Flatpickr JS -->
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 初始化 Flatpickr
+            var startDatePicker = flatpickr("#start-date", {
+                dateFormat: "Y-m-d",
+                maxDate: "today",
+                onChange: function(selectedDates, dateStr, instance) {
+                    // 根據選擇的開始日期動態設置結束日期的最小值
+                    if (selectedDates.length > 0) {
+                        endDatePicker.set('minDate', selectedDates[0]);
+                    }
+                }
+            });
+
+            var endDatePicker = flatpickr("#end-date", {
+                dateFormat: "Y-m-d",
+                maxDate: "today",
+                onChange: function(selectedDates, dateStr, instance) {
+                    // 根據選擇的結束日期動態設置開始日期的最大值
+                    if (selectedDates.length > 0) {
+                        startDatePicker.set('maxDate', selectedDates[0]);
+                    }
+                }
+            });
+
+            // 處理清除日期按鈕
+            document.getElementById("clear-dates").addEventListener("click", function() {
+                startDatePicker.clear();
+                endDatePicker.clear();
+                // 重置表單並提交以刷新數據表格
+                window.location.href = "{% url 'peivr' %}";
+            });
+        });
+    </script>
 {% endblock %}
