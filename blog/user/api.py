@@ -62,12 +62,13 @@ def protected_endpoint(request: HttpRequest) -> dict[str, str]:
     return {"message": "這是一個受保護的端點"}
 
 
-@csrf_exempt
 @router.post(path="/logout/", summary="登出使用者", auth=django_auth)
 def logout_user(request: HttpRequest) -> dict[str, str]:
     """
     登出使用者
     """
-    print(request.user)
-    logout(request)
+    if not request.user.is_authenticated:
+        raise HttpError(401, "未登入")
+
+    logout(request)  # 清除 session 資訊，登出
     return {"message": "登出成功"}
